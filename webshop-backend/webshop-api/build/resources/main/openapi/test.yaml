@@ -1,0 +1,125 @@
+openapi: 3.0.1
+info:
+  title: Webshop API
+  description: Awesome APIs
+  version: 1.0.0
+paths:
+  /notes:
+    get:
+      tags:
+        - Notes
+      summary: Retrieve all notes
+      operationId: getNotes
+      responses:
+        200:
+          description: Notes response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NoteEntity'
+    post:
+      tags:
+        - Notes
+      summary: Create a note
+      operationId: createNote
+      requestBody:
+        description: Note to create
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Note'
+        required: true
+      responses:
+        200:
+          description: Notes response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoteEntity'
+  /notes/{noteId}:
+    get:
+      tags:
+        - Notes
+      summary: Retrieve a single note
+      operationId: getNote
+      parameters:
+        - in: path
+          name: noteId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: ID of the note
+      responses:
+        200:
+          description: Notes response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoteEntity'
+    put:
+      tags:
+        - Notes
+      summary: Update a note
+      operationId: updateNote
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Note'
+        required: true
+      parameters:
+        - in: path
+          name: noteId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: ID of the note
+      responses:
+        200:
+          description: Notes response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoteEntity'
+    delete:
+      tags:
+        - Notes
+      summary: Delete a note
+      operationId: deleteNote
+      parameters:
+        - in: path
+          name: noteId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: ID of the note
+      responses:
+        204:
+          description: Deleted
+components:
+  schemas:
+    Note:
+      type: object
+      description: Representation of a note
+        - name
+        - description
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+    NoteEntity:
+      allOf:
+        - $ref: '#/components/schemas/Note'
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              format: uuid

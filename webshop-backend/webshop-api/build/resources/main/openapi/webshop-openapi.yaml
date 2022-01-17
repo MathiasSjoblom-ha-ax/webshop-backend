@@ -1,0 +1,205 @@
+openapi: 3.0.1
+info:
+  title: Webshop API
+  description: Awesome APIs
+  version: 1.0.0
+paths:
+  /product:
+    get:
+      tags:
+        - Products
+      summary: Retrieve all products
+      operationId: getProducts
+      responses:
+        200:
+          description: Products response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+    post:
+      tags:
+        - Products
+      summary: Create a product
+      operationId: createProduct
+      requestBody:
+        description: Product to create
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+        required: true
+      responses:
+        200:
+          description: Products response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+  /ShoppingCart:
+    get:
+      tags:
+        - ShoppingCarts
+      summary: Retrieve all shoppingCarts
+      operationId: getShoppingCart
+      responses:
+        200:
+          description: ShoppingCarts response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShoppingCart'
+    post:
+      tags:
+        - ShoppingCarts
+      summary: Create a shoppingCart
+      operationId: createShoppingCart
+      requestBody:
+        description: ShoppingCart to create
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShoppingCart'
+        required: true
+      responses:
+        200:
+          description: ShoppingCarts response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingCart'
+  /products/{productId}:
+    get:
+      tags:
+        - Product
+      summary: Retrieve a single product
+      operationId: getProduct
+      parameters:
+        - in: path
+          name: productId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: ID of the product
+      responses:
+        200:
+          description: Products response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+    put:
+      tags:
+        - Products
+      summary: Update a product
+      operationId: updateProduct
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+        required: true
+      parameters:
+        - in: path
+          name: productId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: ID of the product
+      responses:
+        200:
+          description: Products response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+  /shoppingCarts/{shoppingCartId}:
+    get:
+      tags:
+        - ShoppingCart
+      summary: Retrieve a single shoppingCart
+      operationId: getShoppingCarts
+      parameters:
+        - in: path
+          name: shoppingCartId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: ID of the shoppingCart
+      responses:
+        200:
+          description: ShoppingCarts response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingCart'
+    put:
+      tags:
+        - ShoppingCarts
+      summary: Update a shoppingCart
+      operationId: updateShoppingCart
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShoppingCart'
+        required: true
+      parameters:
+        - in: path
+          name: shoppingCartId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: ID of the shoppingCart
+      responses:
+        200:
+          description: ShoppingCarts response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingCart'
+components:
+  schemas:
+    Product:
+      type: object
+      description: Representation of a product
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: integer
+        ID:
+          type: string
+        image:
+          type: string
+    ShoppingCart:
+      type: object
+      description: Representation of a shoppingCart
+      properties:
+        amount:
+          type: integer
+        productID:
+          type: integer
+    ShoppingCartEntity:
+      anyOf:
+        - $ref: '#/components/schemas/ShoppingCart'
+        - type: object
+          required:
+            - id
+            - amount
+          properties:
+            id:
+              type: string
+              format: uuid
+            amount:
+              type: string

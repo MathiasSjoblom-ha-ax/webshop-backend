@@ -1,0 +1,123 @@
+#
+# An Elasticbeanstalk environment must contain three combined resources at a minimum:
+#
+# AWS::ElasticBeanstalk::Application
+# This basically only contains a name for the application
+#
+# AWS::ElasticBeanstalk::ApplicationVersion
+# This resource combines the application, with a reference to an executable deployment package which must reside in S3
+# This resource effectively defines an executable version of the application
+#
+# AWS::ElasticBeanstalk::Environment
+# This resource defines the runtime environment your ApplicationVersion should use.
+# Here, we define things like how many servers we want, size of the server, JDK version to use and so on.
+#
+# PROTIP: To see documentation of a specific resource, google that resource. For instance google AWS::ElasticBeanstalk::Environment
+# And view AWS official documentation on the first result.
+# In these documentations, there are usually examples of how to define that particular resource in the bottom.
+# These examples usually provides great value.
+#
+#
+# Also, remember documentation about CFN functions which can be found here:
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-ref.html
+Parameters:
+  GroupName:
+    Type: String
+    Default: mathiass # TODO: Set your group name here
+    Description: Cloudformation parameters can be used to create different stacks and resources by using the same template,
+      or just simply for easily changed parameters
+Resources:
+  BackendApplication: # Logical ID of a resource. This is the ID used when referring to other resources in same template
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      ApplicationName:
+        Fn::Join:  # This will tell CFN to join together a list of elements with a - as delimiter. Result will be like josefw-BackendApplication
+          - '-'
+          - - !Ref GroupName # The !Ref function returns the value of a specified parameter or resource. See https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-ref.html
+            - 'BackendApplication'
+  BackendApplicationVersion:
+    Type: AWS::ElasticBeanstalk::ApplicationVersion
+    Properties:
+    # TODO: The name of the application must be referenced here. Good practise is to use FN::Ref to refer to the actual resource which created it.
+    # That resource is the one defined with LogicalID BackendApplication above.
+      ApplicationName: !Ref BackendApplication
+    # TODO: Something else here is also missing. We need to define the executable artifact that will run on our servers somehow
+      S3 bucket name: mathiass-storage
+      s3 key: webshop-api-1.0.0-SNAPSHOT.jar
+    # TIP: The S3 bucket property should be the name of your S3 bucket created in first laboration, EG. 'GROUPNAME-storage'
+    # TIP: The S3 Key property should be the key to your executable jar which we saved to S3 after you completed your java application (When we ran aws s3api put-object...)
+    # In that call, we used setting --key webshop-api-1.0.0-SNAPSHOT.jar, which means that the key is 'webshop-api-1.0.0-SNAPSHOT.jar'
+  BackendAppEnvironment:
+    Type: AWS::ElasticBeanstalk::Environment
+    Properties:
+      ApplicationName: !Ref BackendApplication # TODO: Missing properties.
+      VersionLabel:
+        Ref: BackendApplicationVersion
+      EnvironmentName: !Sub '${GroupName}-BackendAppEnvironment' # This uses Fn::Sub function to declare the name of your environment
+      SolutionStackName: Java 11 # TODO: We need to define kind of a "runtime environment" that should be used.
+      # These are predefined setups provided by AWS.
+      # For instance, if we select a stack name for Java 11, your EC2 servers will be
+      # preinstalled with JDK11 and everything that is required to run a Java application on a linux server.
+
+      OptionSettings:
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: IamInstanceProfile # This is a IAM instance profile definition. This basically describes what services your server should have access to
+          Value: ha-elasticbeanstalk-ec2-role
+      # Here you will have to define a few different options
+      # Options documentation can be found at https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/command-options-general.html
+
+      # TODO: From namespace aws:ec2:instances
+        - Namespace: aws:ec2:instances
+          InstanceTypes: t3.nano
+      # name InstanceTypes
+      # The instance type that should be used is a t3.nano
+
+      # TODO: From namespace aws:elasticbeanstalk:environment
+        - Namespace: aws:elasticbeanstalk:environment
+          EnvironmentType: SingleInstance
+      # name EnvironmentType (IMPORTANT! We want to run a single instance only. Read documentation to get that value)
+
+
+
+
+      # TODO: Read line below.
+      # NOTE: If all TODOs above this one has been removed, you are ready to deploy your application for the first time.
+      # This is probably a good idea to do, to make sure that the work you have done up to here is working.
+      # When that stack has deployed successfully, you can find the URL for your application in AWS UI --> Elastic Beanstalk --> Select your environment.
+      # On that page you should be able to see a URL looking like 'http://GROUPNAME-backendappenvironment.eba-sks9d7ep.eu-north-1.elasticbeanstalk.com/'
+      # When entering that URL, your application should pop up. If that works as expected, you are ready to continue with TODO's below.
+
+      # TODO: We must also define a DNS record for accessing your application.
+
+  FrontendRecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: mathiass.cloud-ha.com
+      Type: A
+      HostedZoneId: Z0413857YT73A0A8FRFF
+      TTL: 300
+      ResourceRecords:
+        Fn::GetAtt: [BackendAppEnvironment, IP adress]
+
+      # A DNS record will tell a DNS server for a specific domain where to route traffic when someone accesses http://GROUPNAME-api.cloud-ha.com
+      # Here you must define a AWS::Route53::RecordSet resource.
+      # You will need to provide the following attributes: Name, Type, HostedZoneId, ResourceRecords, TTL.
+      #
+      # Name: should be 'GROUPNAME-api.cloud-ha.com'
+
+      # Type: 'A' (A type records are used when routing to a IP address. Cname records are common for routing to other domain names like www.example.com)
+
+      # HostedZoneId: Must be 'Z0413857YT73A0A8FRFF'. This is the ID of a Hosted Zone I have created for domain name "cloud-ha.com".
+      #     Good practise would be to refer to this from the export of my template. Unfortunately, i created this in web ui.
+      #     Conclusion is: Do what I tell you, dont do what I do.
+
+      # TTL: This is a attribute for time to live of the DNS record. This can be set to value 300
+
+      # ResourceRecords: This must refer to the IP address created by your AWS::ElasticBeanstalk::Environment.
+      #     We cannot hardcode this, because if we create a stack from this template from scratch there will not be an existing IP address.
+      #     Therefore, we must define this parameter with Fn::GetAtt. See possible return values and attributes at
+      #     https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-beanstalk-environment.html#aws-properties-beanstalk-environment-return-values
+      #
+      # TIP: Try to make sure that your RecordSet seems to be valid before updating it in CFN.
+      # Successful creations/updates of RecordSets are really quick
+      # Unsuccessful creations/updates can take forever for some reason. It might take up to 20 minutes before you get an error response.
